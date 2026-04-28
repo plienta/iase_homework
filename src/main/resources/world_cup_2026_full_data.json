@@ -28,8 +28,8 @@
           "date": "2026-06-11",
           "homeTeam": "MEX",
           "awayTeam": "RSA",
-          "homeScore": null,
-          "awayScore": null,
+          "homeScore": 10,
+          "awayScore": 5,
           "ground": "Mexico City"
         },
         {
@@ -38,8 +38,8 @@
           "date": "2026-06-11",
           "homeTeam": "KOR",
           "awayTeam": "CZE",
-          "homeScore": null,
-          "awayScore": null,
+          "homeScore": 5,
+          "awayScore": 7,
           "ground": "Guadalajara (Zapopan)"
         },
         {
@@ -48,8 +48,8 @@
           "date": "2026-06-18",
           "homeTeam": "CZE",
           "awayTeam": "RSA",
-          "homeScore": null,
-          "awayScore": null,
+          "homeScore": 8,
+          "awayScore": 6,
           "ground": "Atlanta"
         },
         {
@@ -58,8 +58,8 @@
           "date": "2026-06-18",
           "homeTeam": "MEX",
           "awayTeam": "KOR",
-          "homeScore": null,
-          "awayScore": null,
+          "homeScore": 8,
+          "awayScore": 5,
           "ground": "Guadalajara (Zapopan)"
         },
         {
@@ -68,8 +68,8 @@
           "date": "2026-06-24",
           "homeTeam": "CZE",
           "awayTeam": "MEX",
-          "homeScore": null,
-          "awayScore": null,
+          "homeScore": 4,
+          "awayScore": 4,
           "ground": "Mexico City"
         },
         {
@@ -78,8 +78,8 @@
           "date": "2026-06-24",
           "homeTeam": "RSA",
           "awayTeam": "KOR",
-          "homeScore": null,
-          "awayScore": null,
+          "homeScore": 6,
+          "awayScore": 6,
           "ground": "Monterrey (Guadalupe)"
         }
       ]
