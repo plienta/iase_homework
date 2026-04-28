@@ -12,6 +12,9 @@ private fun readData(): WorldCupData {
     val jsonString = object {}.javaClass.getResource("/world_cup_2026_full_data.json")!!
         .readText()
     val tournament = Json.decodeFromString<WorldCupData>(jsonString)
+    for (group in tournament.groups) {
+        group.initializeTeamObjectsInMatches()
+    }
     return tournament
 }
 
@@ -21,7 +24,6 @@ private fun readData(): WorldCupData {
 // This run with the assumption that groups has been filtered
 private fun showStandings(allGroups: List<Group>) {
     for (group in allGroups) {
-        group.initializeTeamObjectsInMatches()
         group.calculatePointsForAllTeamInThisGroup();
         val sorted = group.sortTeams();
         printStandingsTable(group.name, sorted);
