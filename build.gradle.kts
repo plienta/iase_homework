@@ -4,7 +4,7 @@ plugins {
     id("application")
 }
 
-group = "org.example"
+group = "de.seuhd.worldcup"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -14,6 +14,35 @@ repositories {
 application {
     mainClass.set("de.seuhd.worldcup.MainKt")
 }
+
+tasks.jar {
+    manifest {
+        attributes(
+            "Main-Class" to "de.seuhd.worldcup.MainKt"
+        )
+    }
+}
+
+tasks.register<Jar>("fatJar") {
+    archiveBaseName.set("worldcup")
+    archiveVersion.set("1.0-SNAPSHOT")
+    archiveClassifier.set("")
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes["Main-Class"] = "de.seuhd.worldcup.MainKt"
+    }
+
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
+}
+
 
 dependencies {
     testImplementation(kotlin("test"))

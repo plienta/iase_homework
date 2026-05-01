@@ -6,14 +6,15 @@ import kotlinx.serialization.Serializable
 data class WorldCupData(
     val tournament: String,
     val groups: List<Group>,
-    val knockouts: List<Knockout>
+    val knockouts: List<Knockout>,
+    val bets: MutableList<Bet> = mutableListOf()
 )
 
 @Serializable
 data class Group(
     val name: String = "",
     var teams: List<Team>,
-    var matches: List<Match>
+    var matches: List<Match>,
 ) {
     fun initializeTeamObjectsInMatches() {
         for (match in matches) {
@@ -25,6 +26,7 @@ data class Group(
         val sorted = teams.sortedWith(
             compareByDescending<Team> { it.teamStat?.totalPoints }
                 .thenByDescending { it.teamStat?.totalGoalsDiff }
+                .thenBy{it.id}
         )
         return sorted
     }
@@ -105,4 +107,14 @@ data class Knockout(
     var homeScore: Int? = null,
     var awayScore: Int? = null,
     val ground: String? = null,
+)
+
+@Serializable
+data class Bet (
+    val betId: Int = 0,
+    val userId: Int = 0,
+    val betValue: Int = 0,
+    val betMatchId: Int = 0,
+    val betGroupName: String = "",
+    var actualResult: Int? = null,
 )
