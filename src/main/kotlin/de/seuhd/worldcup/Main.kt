@@ -54,19 +54,33 @@ fun printMainMenu() {
     print("Choose an option (1 to 5): ")
 }
 
-private fun getGroupOptionByName(allGroups: List<Group>): Group? {
-    print("Enter group name (e.g., 'Group A'): ")
+private fun getGroupOptionByName(allGroups: List<Group>, allGroupPossible: Boolean = false): List<Group> {
+    if (allGroupPossible) {
+        print("Which group’s do you want to take action (e.g., 'Group A') or 'All groups' ")
+    } else {
+        print("Which group’s do you want to take action (e.g., 'Group A')")
+    }
     val input = readLine()?.trim()
     if (input.isNullOrEmpty()) {
         println("No group name entered.")
-        return null
+        return listOf()
     }
-    val group = allGroups.find { it.name.equals(input, ignoreCase = true) }
-    if (group == null) {
-        println("Group '$input' not found.")
-        return null
+    var selectedGroups: List<Group>;
+    if (allGroupPossible && input == "All groups") {
+        selectedGroups = allGroups
+    } else {
+        val group = allGroups.find { it.name.equals(input, ignoreCase = true) }
+        if (group == null) {
+            println("Group '$input' not found.")
+            return listOf()
+        }
+        if (group == null) {
+            println("No group name entered.")
+            return listOf()
+        }
+        selectedGroups = listOf(group)
     }
-    return group
+    return selectedGroups
 }
 
 /* -------------------------------------------------------------
@@ -74,14 +88,12 @@ private fun getGroupOptionByName(allGroups: List<Group>): Group? {
    ------------------------------------------------------------- */
 private fun showStandings(allGroups: List<Group>) {
     // Prompt user for group name
-    val group = getGroupOptionByName(allGroups)
-    if (group == null) {
-        println("No group name entered.")
-        return
-    }
+    val selectedGroups = getGroupOptionByName(allGroups, true)
     // Sort by points desc, goal diff desc, team id asc
-    val sorted = group.sortTeams();
-    printStandingsTable(group.name, sorted);
+    for (group in selectedGroups) {
+        val sorted = group.sortTeams();
+        printStandingsTable(group.name, sorted);
+    }
 }
 
 // Display standings table with position, team name, points, and goal stats
@@ -120,12 +132,16 @@ private fun printStandingsTable(groupName: String, sorted: List<Team>) {
 // lists every match in that group, showing the date, the teams,
 // and the current score (if available)
 private fun showMatches(allGroups: List<Group>) {
-    val group = getGroupOptionByName(allGroups)
-    if (group == null) {
-        println("No group name entered.")
-        return
+    val groups = getGroupOptionByName(allGroups)
+    if (!groups.isEmpty()) {
+        val group = groups[0]
+        if (group == null) {
+            println("No group name entered.")
+            return
+        }
+        printMatchesTable(group.name, group.matches);
     }
-    printMatchesTable(group.name, group.matches);
+
 }
 
 private fun printMatchesTable(groupName: String, matches: List<Match>) {
@@ -168,30 +184,32 @@ private fun printMatchesTable(groupName: String, matches: List<Match>) {
 // the user enters their tip: 1 (Home Win), 2 (Away Win), or 0 (Draw).
 // these bets stored in a collection List<Bet> of tournament
 private fun placeBets(allGroups: List<Group>, allBets: MutableList<Bet>) {
-    val group = getGroupOptionByName(allGroups)
-    if (group == null) {
-        println("No group name entered.")
-        return
-    }
-    for (match in group.matches) {
-        println("Match: ${match.homeTeamObj?.name} vs ${match.awayTeamObj?.name} on ${match.date}")
-        print("Enter your bet (1 for Home Win, 2 for Away Win, 0 for Draw): ")
-        val betInput = readLine()?.trim()
-        if (betInput == "1" || betInput == "2" || betInput == "0") {
-            allBets.add(
-                Bet(
-                    betId = 1,
-                    userId = getCurrentUserId(),
-                    betValue = betInput.toInt(),
-                    betMatchId = match.matchId,
-                    betGroupName = group.name
+    val groups = getGroupOptionByName(allGroups)
+    if (!groups.isEmpty()) {
+        val group = groups[0]
+        if (group == null) {
+            println("No group name entered.")
+            return
+        }
+        for (match in group.matches) {
+            println("Match: ${match.homeTeamObj?.name} vs ${match.awayTeamObj?.name} on ${match.date}")
+            print("Enter your bet (1 for Home Win, 2 for Away Win, 0 for Draw): ")
+            val betInput = readLine()?.trim()
+            if (betInput == "1" || betInput == "2" || betInput == "0") {
+                allBets.add(
+                    Bet(
+                        betId = 1,
+                        userId = getCurrentUserId(),
+                        betValue = betInput.toInt(),
+                        betMatchId = match.matchId,
+                        betGroupName = group.name
+                    )
                 )
-            )
-        } else {
-            println("Skipping this match.")
+            } else {
+                println("Skipping this match.")
+            }
         }
     }
-    return
 }
 
 private fun getCurrentUserId(): Int {
