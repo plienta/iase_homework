@@ -26,6 +26,7 @@ fun main() {
     }
 }
 
+// Load JSON file from resources and deserialize
 private fun readData(): WorldCupData {
     val jsonString = object {}.javaClass.getResource("/world_cup_2026_full_data.json")!!
         .readText()
@@ -33,6 +34,8 @@ private fun readData(): WorldCupData {
     return tournament
 }
 
+// link team IDs to team objects and compute points/goals stats from match results
+// ust run once after JSON deserialization to link team IDs to team objects
 private fun handleData(tournament: WorldCupData) {
     for (group in tournament.groups) {
         group.initializeTeamObjectsInMatches()
@@ -69,35 +72,47 @@ private fun getGroupOptionByName(allGroups: List<Group>): Group? {
 /* -------------------------------------------------------------
    1) Show Standings
    ------------------------------------------------------------- */
-// This run with the assumption that groups has been filtered
-// The user should be able to view the current table of the groups.
-// Position | Points | GF | GA | GD
 private fun showStandings(allGroups: List<Group>) {
+    // Prompt user for group name
     val group = getGroupOptionByName(allGroups)
     if (group == null) {
         println("No group name entered.")
         return
     }
+    // Sort by points desc, goal diff desc, team id asc
     val sorted = group.sortTeams();
     printStandingsTable(group.name, sorted);
 }
 
+// Display standings table with position, team name, points, and goal stats
 private fun printStandingsTable(groupName: String, sorted: List<Team>) {
+    println()
     println("== $groupName ==")
-    println("Pos | Team            | Pts | GF | GA | GD")
-    println("-------------------------------------------")
+    println("Pos | Team                 | Pts | GF | GA | GD")
+    println("------------------------------------------------")
 
-    sorted.forEachIndexed { index, t ->
+    sorted.forEachIndexed { index, team ->
+        val name = team.name ?: "N/A"
+        val pts = team.teamStat?.totalPoints?.toString() ?: "0"
+        val gf = team.teamStat?.totalGoalsFor?.toString() ?: "0"
+        val ga = team.teamStat?.totalGoalsAgainst?.toString() ?: "0"
+        val gd = team.teamStat?.totalGoalsDiff?.toString() ?: "0"
+
         println(
-            "${index + 1}   | " +
-                    "${t.name?.padEnd(15)} | " +
-                    "${t.teamStat?.totalPoints.toString().padEnd(3)} | " +
-                    "${t.teamStat?.totalGoalsFor.toString().padEnd(3)} | " +
-                    "${t.teamStat?.totalGoalsAgainst.toString().padEnd(3)} | " +
-                    "${t.teamStat?.totalGoalsDiff}"
+            "${(index + 1).toString().padEnd(3)} | " +
+                    "${name.padEnd(20)} | " +
+                    "${pts.padEnd(3)} | " +
+                    "${gf.padEnd(2)} | " +
+                    "${ga.padEnd(2)} | " +
+                    "${gd.padEnd(2)}"
         )
     }
+
+    println()
 }
+
+
+
 
 /* -------------------------------------------------------------
    2) Show Matches
@@ -114,29 +129,44 @@ private fun showMatches(allGroups: List<Group>) {
 }
 
 private fun printMatchesTable(groupName: String, matches: List<Match>) {
+    println()
     println("== $groupName ==")
-    println("Date | Ground | Home Team | Away Team | Home Score | Away Score | Home Points | Away Points")
-    println("-------------------------------------------")
+    println("Date         | Ground               | Home Team            | Away Team            | Home Score | Away Score | Home Points | Away Points")
+    println("---------------------------------------------------------------------------------------------------------------")
+
     matches.forEach { match ->
+        val date = match.date ?: "N/A"
+        val ground = match.ground ?: "N/A"
+        val homeTeam = match.homeTeamObj?.name ?: "N/A"
+        val awayTeam = match.awayTeamObj?.name ?: "N/A"
+        val homeScore = match.homeScore?.toString() ?: "N/A"
+        val awayScore = match.awayScore?.toString() ?: "N/A"
+        val homePoints = match.homeTeamObj?.teamStat?.totalPoints?.toString() ?: "N/A"
+        val awayPoints = match.awayTeamObj?.teamStat?.totalPoints?.toString() ?: "N/A"
+
         println(
-            "${match.date}  | " +
-            "${match.ground?.padEnd(6)} | " +
-            "${match.homeTeamObj?.name?.padEnd(10)} | " +
-            "${match.awayTeamObj?.name?.padEnd(10)} | " +
-            "${match.homeScore?.toString()?.padEnd(10) ?: "N/A".padEnd(10)} | " +
-            "${match.awayScore?.toString()?.padEnd(10) ?: "N/A".padEnd(10)} | " +
-            "${match.homeTeamObj?.teamStat?.totalPoints.toString().padEnd(11) ?: "N/A".padEnd(11)} | " +
-            "${match.awayTeamObj?.teamStat?.totalPoints.toString().padEnd(11) ?: "N/A".padEnd(11)}"
-        );
+            "${date.padEnd(12)} | " +
+                    "${ground.padEnd(20)} | " +
+                    "${homeTeam.padEnd(20)} | " +
+                    "${awayTeam.padEnd(20)} | " +
+                    "${homeScore.padEnd(10)} | " +
+                    "${awayScore.padEnd(10)} | " +
+                    "${homePoints.padEnd(11)} | " +
+                    "${awayPoints.padEnd(11)}"
+        )
     }
+
+    println()
 }
+
+
 
 /* -------------------------------------------------------------
    3) Place Bets
    ------------------------------------------------------------- */
-// The program iterates through every match in that group one by one.
-// For each match, the user enters their tip: 1 (Home Win), 2 (Away Win), or 0 (Draw).
-// These bets must be stored in a collection (e.g., a List<Bet> or Map) within the  program
+// For every match in that group one by one.
+// the user enters their tip: 1 (Home Win), 2 (Away Win), or 0 (Draw).
+// these bets stored in a collection List<Bet> of tournament
 private fun placeBets(allGroups: List<Group>, allBets: MutableList<Bet>) {
     val group = getGroupOptionByName(allGroups)
     if (group == null) {
@@ -165,24 +195,38 @@ private fun placeBets(allGroups: List<Group>, allBets: MutableList<Bet>) {
 }
 
 private fun getCurrentUserId(): Int {
-    return 1; // Placeholder for user ID
+    return 1; // placeholder for user ID
 }
 
 /* -------------------------------------------------------------
    4) Show Betting Score
    ------------------------------------------------------------- */
-// shows how successful the user’s tips were.
 // compares the user’s stored bets against the actual results found in the JSON file.
-// Award 1 point for every correct outcome (Win/Loss/Draw).
-// Display the total score and a summary of correct vs. incorrect predictions
+// award 1 point for every correct outcome
+// display the total score and a summary of correct vs. incorrect predictions
+// if match result is not available yet, count it as unknown
 private fun showBettingScore(allGroups: List<Group>, allBets: MutableList<Bet>) {
     println("Betting Score: ")
     println("Group | Match | Your Bet | Actual Result | Points Earned")
     println("---------------------------------------------")
     val userBets = allBets.filter { it.userId == getCurrentUserId() }
+    var totalCorrect = 0
+    var totalIncorrect = 0
+    var totalUnknown = 0
+    var pointsEarned = 0
     for (bet in userBets) {
         finalizeResultForBet(allGroups, bet)
-        val pointsEarned = if (bet.actualResult != null && bet.actualResult == bet.betValue) 1 else 0
+        if (bet.actualResult != null) {
+            if (bet.actualResult == bet.betValue) {
+                totalCorrect++
+                pointsEarned = 1
+            } else {
+                totalIncorrect++
+                pointsEarned = 0
+            }
+        } else {
+            totalUnknown++
+        }
         println(
             "${bet.betGroupName.padEnd(6)} | " +
             "${bet.betMatchId.toString().padEnd(5)} | " +
@@ -191,8 +235,12 @@ private fun showBettingScore(allGroups: List<Group>, allBets: MutableList<Bet>) 
             "$pointsEarned"
         )
     }
+    println()
+    println("Total Correct ${totalCorrect} | Total Incorrect ${totalIncorrect} | Total Unknown ${totalUnknown} | Total Points Earned ${totalCorrect}")
 }
 
+// determine actual match outcome and store in bet.actualResult
+// Returns 1 = home win, 2 = away win, 0 = draw, null if no score
 private fun finalizeResultForBet(allGroups: List<Group>, bet: Bet) {
     val group = allGroups.find { it.name.equals(bet.betGroupName, ignoreCase = true) }
     if (group != null) {

@@ -1,12 +1,14 @@
 package de.seuhd.worldcup
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class WorldCupData(
     val tournament: String,
     val groups: List<Group>,
     val knockouts: List<Knockout>,
+    @Transient
     val bets: MutableList<Bet> = mutableListOf()
 )
 
@@ -31,17 +33,19 @@ data class Group(
         return sorted
     }
 
+    // Calculate team stats (points, goals) from match
     fun calculatePointsForAllTeamInThisGroup() {
         val validMatches = matches.filter { match -> match.homeScore != null && match.awayScore != null }
         for (match in validMatches) {
+            // Determine points: 3 for win, 1 for draw, 0 for loss
             val homePointThisMatch = getPointForFirstTeam(match.homeScore!!, match.awayScore!!);
             val awayPointThisMatch = getPointForFirstTeam(match.awayScore!!, match.homeScore!!);
-
+            // Update home team stats
             match.homeTeamObj?.teamStat?.totalPoints += homePointThisMatch;
             match.homeTeamObj?.teamStat?.totalGoalsFor += match.homeScore!!;
             match.homeTeamObj?.teamStat?.totalGoalsAgainst += match.awayScore!!;
             match.homeTeamObj?.teamStat?.totalGoalsDiff += (match.homeScore!! - match.awayScore!!);
-
+            // Update away team stats
             match.awayTeamObj?.teamStat?.totalPoints += awayPointThisMatch;
             match.awayTeamObj?.teamStat?.totalGoalsFor += match.awayScore!!;
             match.awayTeamObj?.teamStat?.totalGoalsAgainst += match.homeScore!!;
@@ -64,10 +68,10 @@ data class Group(
 data class Team(
     val id: String = "",
     val name: String? = null,
-    var teamStat: TeamStat? = TeamStat()
+    @Transient
+    val teamStat: TeamStat = TeamStat()
 )
 
-@Serializable
 class TeamStat {
     var totalPoints: Int = 0
     var totalGoalsFor: Int = 0
@@ -86,11 +90,14 @@ data class Match(
     var awayScore: Int? = null,
     val ground: String? = null,
 
-    // convert data from string to object
+    // linked team objects
+    @Transient
     var homeTeamObj: Team? = null,
+    @Transient
     var awayTeamObj: Team? = null
 
 ) {
+    // link string IDs to actual Team objects
     fun initializeTeams(teams: List<Team>) {
         homeTeamObj = teams.find { t -> t.id == homeTeam }
         awayTeamObj = teams.find { t -> t.id == awayTeam }
@@ -109,7 +116,6 @@ data class Knockout(
     val ground: String? = null,
 )
 
-@Serializable
 data class Bet (
     val betId: Int = 0,
     val userId: Int = 0,
